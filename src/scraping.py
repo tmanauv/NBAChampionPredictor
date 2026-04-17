@@ -342,7 +342,7 @@ def playoff_experience(team, season):
 
             experience += sum(player_details["G"])
 
-        except (IndexError, ValueError, AttributeError) as e:
+        except (IndexError, ValueError, AttributeError):
             # Player page not found or no playoff data available
             pass
 

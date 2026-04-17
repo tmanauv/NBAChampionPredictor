@@ -1,7 +1,6 @@
 """Feature engineering and selection for NBA Champion prediction."""
 
-import numpy as np
-import pandas as pd
+
 
 
 def select_correlated_features(seasons_df):
