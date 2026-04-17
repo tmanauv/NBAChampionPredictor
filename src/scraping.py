@@ -7,6 +7,8 @@ import pandas as pd
 from bs4 import BeautifulSoup
 from urllib.request import urlopen
 
+from src.cache import load_cached, save_to_cache
+
 
 def get_team_abbreviations(soup_obj):
     """Extract team name-to-abbreviation mappings from a BeautifulSoup object.
@@ -349,15 +351,26 @@ def playoff_experience(team, season):
     return experience
 
 
-def season_details(season):
+def season_details(season, force_refresh=False):
     """Aggregate all data sources for a given season.
+
+    Uses a Parquet cache layer to avoid re-scraping on every run.
+    Pass force_refresh=True to bypass cache and re-scrape from the web.
 
     Args:
         season: The NBA season year.
+        force_refresh: If True, ignore cached data and re-scrape.
 
     Returns:
         DataFrame with complete season details for all teams.
     """
+    cache_name = "season_details"
+
+    if not force_refresh:
+        cached = load_cached(cache_name, season)
+        if cached is not None:
+            return cached
+
     records, team_abrv = team_records(season)
 
     team_df = pd.merge(conf_standings(season, team_abrv), records, on="Team")
@@ -383,5 +396,8 @@ def season_details(season):
     for col in team_df.columns[1:]:
         if col not in ["Top3_Conf", "Conference"]:
             team_df[col] = team_df[col].replace(",", ".").astype(float)
+
+    # Cache the result for future runs
+    save_to_cache(details, cache_name, season)
 
     return details
