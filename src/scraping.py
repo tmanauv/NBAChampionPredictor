@@ -5,9 +5,9 @@ import re
 import numpy as np
 import pandas as pd
 from bs4 import BeautifulSoup
-from urllib.request import urlopen
 
 from src.cache import load_cached, save_to_cache
+from src.http_client import fetch_page
 
 
 def get_team_abbreviations(soup_obj):
@@ -38,7 +38,7 @@ def team_records(season):
         tuple: (team_records DataFrame, team_abbreviations list)
     """
     url = f"https://www.basketball-reference.com/leagues/NBA_{season}.html"
-    soup_obj = BeautifulSoup(urlopen(url), "html.parser")
+    soup_obj = BeautifulSoup(fetch_page(url), "html.parser")
 
     team_abrv = get_team_abbreviations(soup_obj)
 
@@ -114,7 +114,7 @@ def playoff_records(season, team_abrv):
     """
     url = f"https://www.basketball-reference.com/playoffs/NBA_{season}.html"
 
-    table = BeautifulSoup(urlopen(url), "html.parser").findAll(
+    table = BeautifulSoup(fetch_page(url), "html.parser").findAll(
         "table", id=re.compile("advanced-team")
     )
     records = pd.read_html(str(table))[0]
@@ -169,7 +169,7 @@ def conf_standings(season, team_abrv):
     """
     url = f"https://www.basketball-reference.com/leagues/NBA_{season}_standings.html"
 
-    table = BeautifulSoup(urlopen(url), "html.parser")
+    table = BeautifulSoup(fetch_page(url), "html.parser")
     econf_standings = pd.read_html(str(table))[0]
     wconf_standings = pd.read_html(str(table))[1]
 
@@ -232,7 +232,7 @@ def roster_accolades(season, team_abrv):
         DataFrame with team-level accolade shares.
     """
     award_url = f"https://www.basketball-reference.com/awards/awards_{season}.html"
-    soup_obj = BeautifulSoup(urlopen(award_url), "html.parser")
+    soup_obj = BeautifulSoup(fetch_page(award_url), "html.parser")
 
     mvp_table = soup_obj.findAll("table", id=re.compile("mvp"))
     mvp_details = pd.read_html(str(mvp_table))[0]
@@ -264,7 +264,7 @@ def roster_accolades(season, team_abrv):
     dpoy_url = (
         f"https://www.basketball-reference.com/awards/awards_{season}.html#dpoy"
     )
-    dpoy_table = BeautifulSoup(urlopen(dpoy_url), "html.parser")
+    dpoy_table = BeautifulSoup(fetch_page(dpoy_url), "html.parser")
     dpoy_details = pd.read_html(str(dpoy_table))[0]
     dpoy_details.columns = dpoy_details.columns.droplevel(0)
     dpoy_shares = dpoy_details.loc[:, ["Tm", "Share"]]
@@ -305,11 +305,10 @@ def playoff_experience(team, season):
     Returns:
         int: Total playoff games played by current roster members before this season.
     """
-    from time import sleep
     from tqdm.auto import tqdm
 
     roster_url = f"https://www.basketball-reference.com/teams/{team}/{season}.html"
-    roster_table = BeautifulSoup(urlopen(roster_url), "html.parser")
+    roster_table = BeautifulSoup(fetch_page(roster_url), "html.parser")
     roster = pd.read_html(str(roster_table))[0]
 
     experience = 0
@@ -325,10 +324,9 @@ def playoff_experience(team, season):
         )
 
         try:
-            player_table = BeautifulSoup(urlopen(player_url), "html.parser").findAll(
+            player_table = BeautifulSoup(fetch_page(player_url), "html.parser").findAll(
                 "table", id=re.compile("playoffs_totals")
             )
-            sleep(1)
             player_details = pd.read_html(str(player_table))[0]
 
             player_details = player_details.loc[:, ["Season", "G", "MP"]]
