@@ -1,6 +1,7 @@
 """Feature engineering and selection for NBA Champion prediction."""
 
 import numpy as np
+import pandas as pd
 
 
 def add_engineered_features(df):
@@ -116,3 +117,105 @@ def get_feature_splits(df):
     categorical_cols = ["Top3_Conf", "Conference"]
     numeric_cols = [col for col in df.columns if col not in categorical_cols]
     return numeric_cols, categorical_cols
+
+
+def select_features_mutual_info(X, y, k=15):
+    """Select top-k features using mutual information regression.
+
+    Mutual information captures non-linear relationships that Pearson
+    correlation misses.
+
+    Args:
+        X: Feature DataFrame (numeric columns only).
+        y: Target Series (Champion_Share_Score).
+        k: Number of top features to select.
+
+    Returns:
+        list: Names of the top-k features ranked by mutual information.
+    """
+    from sklearn.feature_selection import mutual_info_regression
+
+    X_filled = X.fillna(0)
+    mi_scores = mutual_info_regression(X_filled, y, random_state=42)
+    mi_series = pd.Series(mi_scores, index=X.columns).sort_values(ascending=False)
+    return list(mi_series.head(k).index)
+
+
+def select_features_rfe(X, y, n_features=15):
+    """Select features using Recursive Feature Elimination with GBR.
+
+    Uses GradientBoostingRegressor as the estimator for RFE, which
+    naturally handles feature importance ranking.
+
+    Args:
+        X: Feature DataFrame (numeric columns only).
+        y: Target Series (Champion_Share_Score).
+        n_features: Number of features to select.
+
+    Returns:
+        list: Names of selected features.
+    """
+    from sklearn.ensemble import GradientBoostingRegressor
+    from sklearn.feature_selection import RFE
+    from sklearn.impute import SimpleImputer
+
+    imputer = SimpleImputer(strategy="median")
+    X_imputed = pd.DataFrame(
+        imputer.fit_transform(X), columns=X.columns, index=X.index
+    )
+
+    estimator = GradientBoostingRegressor(
+        n_estimators=50, max_depth=3, random_state=42
+    )
+    selector = RFE(estimator, n_features_to_select=min(n_features, X.shape[1]))
+    selector.fit(X_imputed, y)
+
+    return list(X.columns[selector.support_])
+
+
+def combined_feature_selection(seasons_df, target_col="Champion_Share_Score", k=15):
+    """Select features using multiple methods and return their union.
+
+    Combines correlation-based, mutual information, and RFE selection to
+    get a robust feature set that captures both linear and non-linear
+    relationships.
+
+    Args:
+        seasons_df: Full season DataFrame with all features.
+        target_col: Name of the target column.
+        k: Number of features to select per method.
+
+    Returns:
+        dict: {
+            'correlation': list of correlation-selected features,
+            'mutual_info': list of MI-selected features,
+            'rfe': list of RFE-selected features,
+            'union': combined unique feature list,
+            'intersection': features selected by all methods,
+        }
+    """
+    numeric_df = seasons_df.select_dtypes(include="number")
+    feature_cols = [c for c in numeric_df.columns if c != target_col]
+    X = numeric_df[feature_cols]
+    y = numeric_df[target_col]
+
+    # Method 1: Correlation
+    corr_series = X.corrwith(y).dropna()
+    corr_features = list(corr_series[corr_series > 0].nlargest(k).index)
+
+    # Method 2: Mutual Information
+    mi_features = select_features_mutual_info(X, y, k=k)
+
+    # Method 3: RFE
+    rfe_features = select_features_rfe(X, y, n_features=k)
+
+    all_features = set(corr_features) | set(mi_features) | set(rfe_features)
+    common_features = set(corr_features) & set(mi_features) & set(rfe_features)
+
+    return {
+        "correlation": corr_features,
+        "mutual_info": mi_features,
+        "rfe": rfe_features,
+        "union": sorted(all_features),
+        "intersection": sorted(common_features),
+    }
