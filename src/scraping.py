@@ -349,7 +349,7 @@ def playoff_experience(team, season):
     return experience
 
 
-def season_details(season, force_refresh=False):
+def season_details(season, force_refresh=False, include_playoff_exp=False):
     """Aggregate all data sources for a given season.
 
     Uses a Parquet cache layer to avoid re-scraping on every run.
@@ -358,11 +358,15 @@ def season_details(season, force_refresh=False):
     Args:
         season: The NBA season year.
         force_refresh: If True, ignore cached data and re-scrape.
+        include_playoff_exp: If True, compute playoff experience per team.
+            This is slow (~1 request per player) so disabled by default.
 
     Returns:
         DataFrame with complete season details for all teams.
     """
     cache_name = "season_details"
+    if include_playoff_exp:
+        cache_name = "season_details_with_playoff_exp"
 
     if not force_refresh:
         cached = load_cached(cache_name, season)
@@ -378,14 +382,18 @@ def season_details(season, force_refresh=False):
         team_df, roster_accolades(season, team_abrv), on="Team"
     )
 
-    # playoff_experience is commented out for performance reasons
-    # Uncomment and optimize in a future PR
-    # playoff_experience_dict = {}
-    # for team in tqdm(details['Team'], desc='team loop'):
-    #     playoff_exp = playoff_experience(team, season)
-    #     sleep(5)
-    #     playoff_experience_dict[team] = playoff_exp
-    # details['Playoff_Experience'] = details['Team'].map(playoff_experience_dict)
+    if include_playoff_exp:
+        import logging
+
+        logger = logging.getLogger(__name__)
+        playoff_experience_dict = {}
+        for team in details["Team"]:
+            logger.info("Computing playoff experience for %s (%d)", team, season)
+            playoff_exp = playoff_experience(team, season)
+            playoff_experience_dict[team] = playoff_exp
+        details["Playoff_Experience"] = details["Team"].map(
+            playoff_experience_dict
+        )
 
     details = pd.merge(
         details, playoff_records(season, team_abrv), on="Team"
