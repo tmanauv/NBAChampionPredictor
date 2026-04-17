@@ -12,7 +12,8 @@ def select_correlated_features(seasons_df):
     Returns:
         list: Selected feature column names including metadata columns.
     """
-    corr_series = seasons_df.corrwith(seasons_df["Champion_Share_Score"])
+    numeric_df = seasons_df.select_dtypes(include="number")
+    corr_series = numeric_df.corrwith(numeric_df["Champion_Share_Score"])
     selected_features = list(corr_series[corr_series > 0].index)
     selected_features.insert(1, "Conference")
     selected_features.insert(0, "season")
