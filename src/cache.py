@@ -4,7 +4,6 @@ Scraped data is stored as Parquet files in data/raw/. Use --refresh or
 set force_refresh=True to re-scrape and overwrite cached data.
 """
 
-import os
 from pathlib import Path
 
 import pandas as pd
