@@ -6,7 +6,7 @@ from time import sleep
 import pandas as pd
 from tqdm import tqdm
 
-from nba_predictor.config import SEASON_START, SEASON_END, SCRAPE_DELAY_SECONDS
+from nba_predictor.config import SCRAPE_DELAY_SECONDS, SEASON_END, SEASON_START
 from nba_predictor.scraping.season_details import scrape_season_details
 
 

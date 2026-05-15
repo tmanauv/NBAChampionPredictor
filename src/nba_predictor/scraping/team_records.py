@@ -1,12 +1,12 @@
 from __future__ import annotations
 
+import re
 from io import StringIO
 from pathlib import Path
-import re
 from typing import Tuple
 
-from bs4 import BeautifulSoup
 import pandas as pd
+from bs4 import BeautifulSoup
 
 from nba_predictor.config import BASE_URL
 from nba_predictor.scraping.http import fetch_html
@@ -45,16 +45,12 @@ def scrape_team_records(
 
     records_df = records_df.apply(pd.to_numeric, errors="coerce").fillna(records_df)
     records_df.columns = records_df.columns.droplevel(0)
-    records_df = records_df.drop(
-        ["Rk", "PW", "PL", "Arena", "Attend.", "Attend./G"], axis=1
-    )
+    records_df = records_df.drop(["Rk", "PW", "PL", "Arena", "Attend.", "Attend./G"], axis=1)
     records_df["Team"] = records_df["Team"].str.replace("*", "", regex=False)
 
     for index in range(20, 24):
         if index != 22:
-            records_df.columns.values[index] = (
-                "Opp_" + records_df.columns.values[index]
-            )
+            records_df.columns.values[index] = "Opp_" + records_df.columns.values[index]
 
     records_df = records_df.drop(
         ["Unnamed: 17_level_1", "Unnamed: 22_level_1", "Unnamed: 27_level_1"], axis=1
@@ -70,9 +66,7 @@ def scrape_team_records(
     for col in records_df.columns[1:]:
         records_df[col] = records_df[col].replace(",", ".").astype(float)
 
-    records_df["SOY"] = (
-        records_df.nlargest(5, "SRS")["SRS"].sum() / records_df["Team"].count()
-    )
+    records_df["SOY"] = records_df.nlargest(5, "SRS")["SRS"].sum() / records_df["Team"].count()
 
     records_df["Net_Four_Factors_Rating"] = (
         0.4 * records_df["eFG%"]

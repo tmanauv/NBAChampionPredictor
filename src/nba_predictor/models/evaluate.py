@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Dict, List
+from typing import List
 
 import numpy as np
 import pandas as pd
@@ -55,9 +55,7 @@ def _compute_per_season_ndcg(
     ndcg_scores: List[float] = []
     for season in df_test["season"].unique():
         df_season = df_test[df_test["season"] == season].copy()
-        df_season.sort_values(
-            by=["Champion_Share_Score"], ascending=False, inplace=True
-        )
+        df_season.sort_values(by=["Champion_Share_Score"], ascending=False, inplace=True)
         y_true = df_season.pop("Champion_Share_Score")
         df_season = df_season.drop(columns=["Team", "season"])
 

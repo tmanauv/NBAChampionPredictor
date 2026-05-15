@@ -82,10 +82,7 @@ def _fetch_with_retry(url: str, max_retries: int, backoff_base: float) -> str:
         except (URLError, OSError, TimeoutError) as exc:
             last_error = exc
             if attempt < max_retries:
-                wait = backoff_base ** attempt
-                print(f"Retry {attempt + 1}/{max_retries} for {url} "
-                      f"(waiting {wait:.1f}s): {exc}")
+                wait = backoff_base**attempt
+                print(f"Retry {attempt + 1}/{max_retries} for {url} (waiting {wait:.1f}s): {exc}")
                 time.sleep(wait)
-    raise ConnectionError(
-        f"Failed to fetch {url} after {max_retries + 1} attempts"
-    ) from last_error
+    raise ConnectionError(f"Failed to fetch {url} after {max_retries + 1} attempts") from last_error

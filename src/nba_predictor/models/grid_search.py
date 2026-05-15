@@ -1,12 +1,10 @@
 from __future__ import annotations
 
-from typing import Dict, List
-
 import sys
+from typing import Dict, List
 
 import numpy as np
 import pandas as pd
-from tqdm import tqdm
 
 from nba_predictor.models.evaluate import fit_and_evaluate
 
