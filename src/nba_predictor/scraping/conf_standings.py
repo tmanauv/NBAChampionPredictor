@@ -1,20 +1,26 @@
 from __future__ import annotations
 
 from io import StringIO
-from urllib.request import urlopen
+from pathlib import Path
 
 from bs4 import BeautifulSoup
 import pandas as pd
 
 from nba_predictor.config import BASE_URL
+from nba_predictor.scraping.http import fetch_html
 from nba_predictor.scraping.utils import TeamAbrv, map_team_names
 
 
-def scrape_conf_standings(season: int, team_abrv: TeamAbrv) -> pd.DataFrame:
+def scrape_conf_standings(
+    season: int,
+    team_abrv: TeamAbrv,
+    cache_dir: Path | None = Path("data/cache"),
+) -> pd.DataFrame:
     """Scrape conference standings for *season*."""
     url = f"{BASE_URL}/leagues/NBA_{season}_standings.html"
 
-    soup = BeautifulSoup(urlopen(url), "html.parser")
+    html = fetch_html(url, cache_dir=cache_dir)
+    soup = BeautifulSoup(html, "html.parser")
     east_df = pd.read_html(StringIO(str(soup)))[0]
     west_df = pd.read_html(StringIO(str(soup)))[1]
 

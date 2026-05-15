@@ -1,21 +1,27 @@
 from __future__ import annotations
 
 from io import StringIO
-from urllib.request import urlopen
+from pathlib import Path
+import re
 
 from bs4 import BeautifulSoup
 import numpy as np
 import pandas as pd
-import re
 
 from nba_predictor.config import BASE_URL
+from nba_predictor.scraping.http import fetch_html
 from nba_predictor.scraping.utils import TeamAbrv, fill_missing_teams
 
 
-def scrape_roster_accolades(season: int, team_abrv: TeamAbrv) -> pd.DataFrame:
+def scrape_roster_accolades(
+    season: int,
+    team_abrv: TeamAbrv,
+    cache_dir: Path | None = Path("data/cache"),
+) -> pd.DataFrame:
     """Scrape MVP, All-NBA, DPOY, and All-Defense shares for *season*."""
     award_url = f"{BASE_URL}/awards/awards_{season}.html"
-    soup = BeautifulSoup(urlopen(award_url), "html.parser")
+    html = fetch_html(award_url, cache_dir=cache_dir)
+    soup = BeautifulSoup(html, "html.parser")
 
     mvp_table = soup.findAll("table", id=re.compile("mvp"))
     mvp_details = pd.read_html(StringIO(str(mvp_table)))[0]
@@ -43,7 +49,8 @@ def scrape_roster_accolades(season: int, team_abrv: TeamAbrv) -> pd.DataFrame:
     all_defense_shares = all_defense_shares.groupby("Team", as_index=False).agg("sum")
 
     dpoy_url = f"{BASE_URL}/awards/awards_{season}.html#dpoy"
-    dpoy_soup = BeautifulSoup(urlopen(dpoy_url), "html.parser")
+    dpoy_html = fetch_html(dpoy_url, cache_dir=cache_dir)
+    dpoy_soup = BeautifulSoup(dpoy_html, "html.parser")
     dpoy_details = pd.read_html(StringIO(str(dpoy_soup)))[0]
     dpoy_details.columns = dpoy_details.columns.droplevel(0)
     dpoy_shares = dpoy_details.loc[:, ["Tm", "Share"]]
