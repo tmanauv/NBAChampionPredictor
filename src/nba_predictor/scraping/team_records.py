@@ -1,18 +1,22 @@
 from __future__ import annotations
 
 from io import StringIO
+from pathlib import Path
 import re
 from typing import Tuple
-from urllib.request import urlopen
 
 from bs4 import BeautifulSoup
 import pandas as pd
 
 from nba_predictor.config import BASE_URL
+from nba_predictor.scraping.http import fetch_html
 from nba_predictor.scraping.utils import TeamAbrv
 
 
-def scrape_team_records(season: int) -> Tuple[pd.DataFrame, TeamAbrv]:
+def scrape_team_records(
+    season: int,
+    cache_dir: Path | None = Path("data/cache"),
+) -> Tuple[pd.DataFrame, TeamAbrv]:
     """Scrape team advanced stats for *season* from Basketball Reference.
 
     Returns
@@ -22,7 +26,8 @@ def scrape_team_records(season: int) -> Tuple[pd.DataFrame, TeamAbrv]:
         scraping functions for the same season.
     """
     url = f"{BASE_URL}/leagues/NBA_{season}.html"
-    soup = BeautifulSoup(urlopen(url), "html.parser")
+    html = fetch_html(url, cache_dir=cache_dir)
+    soup = BeautifulSoup(html, "html.parser")
     links = soup.findAll("table", id=re.compile("advanced-team"))[0].findAll("a")
 
     team_name: list[str] = []

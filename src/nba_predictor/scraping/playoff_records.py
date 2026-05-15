@@ -1,21 +1,27 @@
 from __future__ import annotations
 
 from io import StringIO
+from pathlib import Path
 import re
-from urllib.request import urlopen
 
 from bs4 import BeautifulSoup
 import pandas as pd
 
 from nba_predictor.config import BASE_URL
+from nba_predictor.scraping.http import fetch_html
 from nba_predictor.scraping.utils import TeamAbrv, fill_missing_teams
 
 
-def scrape_playoff_records(season: int, team_abrv: TeamAbrv) -> pd.DataFrame:
+def scrape_playoff_records(
+    season: int,
+    team_abrv: TeamAbrv,
+    cache_dir: Path | None = Path("data/cache"),
+) -> pd.DataFrame:
     """Scrape playoff win/loss records and compute Champion Share Score."""
     url = f"{BASE_URL}/playoffs/NBA_{season}.html"
 
-    table = BeautifulSoup(urlopen(url), "html.parser").findAll(
+    html = fetch_html(url, cache_dir=cache_dir)
+    table = BeautifulSoup(html, "html.parser").findAll(
         "table", id=re.compile("advanced-team")
     )
     records_df = pd.read_html(StringIO(str(table)))[0]
