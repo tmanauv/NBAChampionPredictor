@@ -19,12 +19,12 @@ ENV/
 .ipynb_checkpoints/
 
 # Project artifacts
-champ_predict.csv
-champ_predict_*.csv
+champ_predict*.csv
 *.joblib
 *.pkl
-data/
-models/
+/data/
+/saved_models/
+/output/
 
 # OS / editor
 .DS_Store
