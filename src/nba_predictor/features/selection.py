@@ -21,9 +21,7 @@ def select_features(
     correlation.
     """
     train_df = seasons_df[seasons_df["season"] <= train_cutoff]
-    corr = train_df.corrwith(
-        train_df["Champion_Share_Score"], numeric_only=True
-    )
+    corr = train_df.corrwith(train_df["Champion_Share_Score"], numeric_only=True)
     positively_correlated = list(corr[corr > 0].index)
 
     positively_correlated.insert(1, "Conference")

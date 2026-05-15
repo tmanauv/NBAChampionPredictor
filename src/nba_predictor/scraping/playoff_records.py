@@ -1,11 +1,11 @@
 from __future__ import annotations
 
+import re
 from io import StringIO
 from pathlib import Path
-import re
 
-from bs4 import BeautifulSoup
 import pandas as pd
+from bs4 import BeautifulSoup
 
 from nba_predictor.config import BASE_URL
 from nba_predictor.scraping.http import fetch_html
@@ -21,9 +21,7 @@ def scrape_playoff_records(
     url = f"{BASE_URL}/playoffs/NBA_{season}.html"
 
     html = fetch_html(url, cache_dir=cache_dir)
-    table = BeautifulSoup(html, "html.parser").findAll(
-        "table", id=re.compile("advanced-team")
-    )
+    table = BeautifulSoup(html, "html.parser").findAll("table", id=re.compile("advanced-team"))
     records_df = pd.read_html(StringIO(str(table)))[0]
 
     records_df = records_df.apply(pd.to_numeric, errors="coerce").fillna(records_df)
@@ -45,8 +43,6 @@ def scrape_playoff_records(
     records_df["Team"] = records_df["Team"].replace(name_to_abbr)
 
     records_df = fill_missing_teams(records_df, team_abrv)
-    records_df = records_df.sort_values(
-        by=["Champion_Share_Score"], ascending=False
-    )
+    records_df = records_df.sort_values(by=["Champion_Share_Score"], ascending=False)
 
     return records_df

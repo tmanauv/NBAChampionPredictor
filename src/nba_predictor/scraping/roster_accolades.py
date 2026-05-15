@@ -1,12 +1,12 @@
 from __future__ import annotations
 
+import re
 from io import StringIO
 from pathlib import Path
-import re
 
-from bs4 import BeautifulSoup
 import numpy as np
 import pandas as pd
+from bs4 import BeautifulSoup
 
 from nba_predictor.config import BASE_URL
 from nba_predictor.scraping.http import fetch_html
@@ -34,18 +34,14 @@ def scrape_roster_accolades(
     all_nba_details = pd.read_html(StringIO(str(all_nba_table)))[0]
     all_nba_details.columns = all_nba_details.columns.droplevel(0)
     all_nba_shares = all_nba_details.loc[:, ["Tm", "Share"]]
-    all_nba_shares.rename(
-        columns={"Tm": "Team", "Share": "all_nba_share"}, inplace=True
-    )
+    all_nba_shares.rename(columns={"Tm": "Team", "Share": "all_nba_share"}, inplace=True)
     all_nba_shares = all_nba_shares.groupby("Team", as_index=False).agg("sum")
 
     all_defense_table = soup.findAll("table", id=re.compile("leading_all_defense"))
     all_defense_details = pd.read_html(StringIO(str(all_defense_table)))[0]
     all_defense_details.columns = all_defense_details.columns.droplevel(0)
     all_defense_shares = all_defense_details.loc[:, ["Tm", "Share"]]
-    all_defense_shares.rename(
-        columns={"Tm": "Team", "Share": "all_defense_share"}, inplace=True
-    )
+    all_defense_shares.rename(columns={"Tm": "Team", "Share": "all_defense_share"}, inplace=True)
     all_defense_shares = all_defense_shares.groupby("Team", as_index=False).agg("sum")
 
     dpoy_url = f"{BASE_URL}/awards/awards_{season}.html#dpoy"

@@ -4,10 +4,10 @@ from pathlib import Path
 
 import pandas as pd
 
-from nba_predictor.scraping.team_records import scrape_team_records
 from nba_predictor.scraping.conf_standings import scrape_conf_standings
-from nba_predictor.scraping.roster_accolades import scrape_roster_accolades
 from nba_predictor.scraping.playoff_records import scrape_playoff_records
+from nba_predictor.scraping.roster_accolades import scrape_roster_accolades
+from nba_predictor.scraping.team_records import scrape_team_records
 
 
 def scrape_season_details(

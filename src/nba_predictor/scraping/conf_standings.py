@@ -3,8 +3,8 @@ from __future__ import annotations
 from io import StringIO
 from pathlib import Path
 
-from bs4 import BeautifulSoup
 import pandas as pd
+from bs4 import BeautifulSoup
 
 from nba_predictor.config import BASE_URL
 from nba_predictor.scraping.http import fetch_html
